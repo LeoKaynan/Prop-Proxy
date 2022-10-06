@@ -6,7 +6,7 @@
 Prop-Proxy allows you to intercept getters and setters of class attributes through decorators
 
 ## Installation
-This package has to be used with Typescript
+This package need to be used with Typescript
 
 ```sh
 npm install prop-proxy --save

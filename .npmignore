@@ -1,0 +1,6 @@
+node_modules
+src
+test
+.eslintrc.json
+.npmognore
+jest.config.ts

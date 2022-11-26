@@ -27,11 +27,6 @@ export function usePropertyProxy<T>() {
 					Object.defineProperty(this, key, {
 						get: () => ObjectProxy[key]?.getter?.(val) || val,
 						set: (newValue) => {
-							if (schemaObj){
-    							const prop = schemaObj.pick({ [key as string]: true });
-    							prop.parse({ [key]: newValue});
-    						}
-
 							if(ObjectProxy[key]?.setter) {
 								ObjectProxy[key].setter?.({setValue(value) {
 									val = value;
@@ -39,6 +34,11 @@ export function usePropertyProxy<T>() {
 								return;
 							}
 							val = newValue;
+
+							if (schemaObj){
+								const prop = schemaObj.pick({ [key as string]: true });
+								prop.parse({ [key]: newValue});
+							}
 						},
 						enumerable: true,
 					});

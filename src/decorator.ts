@@ -5,12 +5,12 @@ import { AnyZodObject } from "zod";
 export function usePropertyProxy<T>() {
 	let schemaObj: AnyZodObject;
 
-	function Validate(schama: AnyZodObject): ClassDecorator {
+	function Validate(schama: object): ClassDecorator {
     	return function(target: any) {
     	  return new Proxy(target, {
     			construct: (_target, args) => {
     				if(schama) {
-    					schemaObj = schama;
+    					schemaObj = schama as AnyZodObject;
     				}
     				return new target(...args);
     			}

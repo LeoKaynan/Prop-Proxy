@@ -13,7 +13,9 @@
   "keywords": [
     "proxy",
     "decorator",
-    "class-validation"
+    "class-validation",
+    "zod",
+    "class-validator"
   ],
   "homepage": "https://github.com/LeoKaynan/Prop-Proxy",
   "devDependencies": {

@@ -30,5 +30,8 @@
   "scripts": {
     "build": "tsc",
     "test": "jest"
+  },
+  "dependencies": {
+    "zod": "^3.19.1"
   }
 }

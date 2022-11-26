@@ -1,7 +1,23 @@
 import { PropertyProxy, ProxyType } from "./types";
 import { lowCaseFirstLetter } from "./util";
+import { AnyZodObject } from "zod";
 
 export function usePropertyProxy<T>() {
+	let schemaObj: AnyZodObject;
+
+	function Validate(schama: AnyZodObject): ClassDecorator {
+    	return function(target: any) {
+    	  return new Proxy(target, {
+    			construct: (_target, args) => {
+    				if(schama) {
+    					schemaObj = schama;
+    				}
+    				return new target(...args);
+    			}
+    		});
+    	};
+	}
+
 	function Property(): (target: any, key: keyof T) => void {
 		return function(target: any, key: keyof T){
 			Object.defineProperty(target, key, {
@@ -11,6 +27,11 @@ export function usePropertyProxy<T>() {
 					Object.defineProperty(this, key, {
 						get: () => ObjectProxy[key]?.getter?.(val) || val,
 						set: (newValue) => {
+							if (schemaObj){
+    							const prop = schemaObj.pick({ [key as string]: true });
+    							prop.parse({ [key]: newValue});
+    						}
+
 							if(ObjectProxy[key]?.setter) {
 								ObjectProxy[key].setter?.({setValue(value) {
 									val = value;
@@ -49,5 +70,5 @@ export function usePropertyProxy<T>() {
 		},
 	}) as unknown as PropertyProxy<T>;
 
-	return {Property, proxy};
+	return {Property, proxy, Validate};
 }

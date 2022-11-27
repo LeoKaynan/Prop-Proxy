@@ -8,15 +8,16 @@ export function usePropertyProxy<T>() {
 	let schemaObj: AnyZodObject;
 	let schemaTarget: any;
 
-	function Validate(schama: object): ClassDecorator {
+	function Validate(schama?: object): ClassDecorator {
     	return function(target: any) {
     	  return new Proxy(target, {
     			construct: (_target, args) => {
     				if(schama) {
     					schemaObj = schama as AnyZodObject;
     				}
-					schemaTarget = new _target(...args);
                     
+					schemaTarget = new _target(...args);
+        
     				return new target(...args);
     			}
     		});
@@ -40,21 +41,25 @@ export function usePropertyProxy<T>() {
 							}
 							val = newValue;
 
-							
-							validate(target).then(errors => {
-								if (errors.length > 0) {
+							if (schemaTarget && schemaTarget[key] !== newValue) {
+								Object.assign(schemaTarget, { [key]: newValue} );
+							}
+	                        
+							if (schemaTarget){                
+								validate(schemaTarget).then(errors => {
+									if (errors.length > 0) {
+										const errorsMaped: ErrorItem[] = errors.map(error => {
+											return {
+												property: error.property,
+												message: (error.constraints && Object.values(error.constraints)[0]) as string,
+												type: error.constraints && Object.keys(error.constraints)[0]
+											};
+										});
                             
-									const errorsMaped: ErrorItem[] = errors.map(error => {
-										return {
-											property: error.property,
-											message: (error.constraints && Object.values(error.constraints)[0]) as string,
-											type: error.constraints && Object.keys(error.constraints)[0]
-										};
-									});
-                            
-									throw new ValidationError(errorsMaped);
-								} 
-							});
+										throw new ValidationError(errorsMaped);
+									} 
+								});
+							} 
 
 							if (schemaObj && schemaTarget){
 								try {

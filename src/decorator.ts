@@ -19,7 +19,7 @@ export function usePropertyProxy<T>() {
                     
 					schemaTarget = new _target(...args);
         
-    				return new target(...args);
+    				return schemaTarget;
     			}
     		});
     	};

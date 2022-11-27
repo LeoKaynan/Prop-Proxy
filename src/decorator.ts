@@ -1,9 +1,9 @@
 import { PropertyProxy, ProxyType, Schemas } from "./types";
 import { lowCaseFirstLetter } from "./util";
-import { AnyZodObject, z, ZodObject } from "zod";
+import { z, ZodObject } from "zod";
 import { validate } from "class-validator";
 import { ErrorItem, ValidationError } from "./Error/ValidationError";
-import { ValidationError as ErrorYup, ObjectSchema, AnyObjectSchema } from "yup";
+import { ValidationError as ErrorYup, ObjectSchema } from "yup";
 
 export function usePropertyProxy<T>() {
 	let schemaObj: Schemas;
@@ -14,12 +14,12 @@ export function usePropertyProxy<T>() {
     	  return new Proxy(target, {
     			construct: (_target, args) => {
     				if(schama) {
-    					schemaObj = schama as AnyZodObject | AnyObjectSchema;
+    					schemaObj = schama;
     				}
                     
 					schemaTarget = new _target(...args);
         
-    				return schemaTarget;
+    				return new target(...args);
     			}
     		});
     	};

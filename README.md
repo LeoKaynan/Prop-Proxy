@@ -25,17 +25,15 @@ You need to enable in tsconfig.json:
 
 
 ## Usage
+### Using proxy for interception
+
 ```typescript
 import { usePropertyProxy } from 'prop-proxy'
-
-type PartialPick<T, K extends keyof T> = Partial<T> & Pick<T, K>
 
 interface Struct {
     title: string;
     isActive: boolean;
 }
-
-type Params = PartialPick<Struct, 'title'> //isActive is optional param in constructor
 
 const { Property, proxy } = usePropertyProxy<Struct>();
 
@@ -46,7 +44,7 @@ class Category implements Struct {
     @Property()
     isActive!: boolean;
 
-    constructor({title, isActive}: Params){
+    constructor({title, isActive}: Struct){
         Object.assign(this, {title, isActive})
     }
 }
@@ -57,13 +55,50 @@ proxy.getTitle((value) => `other_${value}`)
 //setter intercept
 proxy.setIsActive(({setValue, value}) => value ? setValue(value) : setValue(true));
 
-const category = new Category({title: 'title'})
+const category = new Category({title: 'title', isActive: false})
 
 console.log(category.title) // output: other_title
 
 console.log(category.isActive) // output: true
 ```
 
+### Using validator with Zod
+
+```typescript
+import { usePropertyProxy } from 'prop-proxy'
+import { z } from 'zod'
+
+interface Struct {
+    title: string;
+    isActive: boolean;
+}
+
+export const SchemaCategory: z.ZodType<Struct> = z.object({
+    title: z.string().max(10),
+    isActive: z.boolean(),
+})
+
+const { Property, proxy, Validate } = usePropertyProxy<Struct>();
+
+@Validate(SchemaCategory)
+class Category implements Struct {
+    @Property()
+    title!: string;
+
+    @Property()
+    isActive!: boolean;
+
+    constructor({title, isActive}: Struct){
+        Object.assign(this, {title, isActive})
+    }
+}
+
+const category = new Category({title: 'title longer than 10 characters', isActive: true})
+
+// output: an error is thrown, as the title length cannot be greater than 10 characters, according to schema.
+```
+
+The error is thrown both for values ​​sent by the constructor and for those modified by the Class instance.
 
 
 ## License

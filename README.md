@@ -98,8 +98,40 @@ const category = new Category({title: 'title longer than 10 characters', isActiv
 // output: an error is thrown, as the title length cannot be greater than 10 characters, according to schema.
 ```
 
-The error is thrown both for values ​​sent by the constructor and for those modified by the Class instance.
+> The error is thrown both for values ​​sent by the constructor and for those modified by the Class instance.
 
+### Using validator with Class-Validator
+
+```typescript
+import { usePropertyProxy } from 'prop-proxy'
+import { Length } from 'class-validator'
+
+interface Struct {
+    title: string;
+    isActive: boolean;
+}
+
+const { Property, proxy } = usePropertyProxy<Struct>();
+
+class Category implements Struct {
+    @Property()
+    @Length(0, 10)
+    title!: string;
+
+    @Property()
+    isActive!: boolean;
+
+    constructor({title, isActive}: Struct){
+        Object.assign(this, {title, isActive})
+    }
+}
+
+const category = new Category({title: 'title longer than 10 characters', isActive: true})
+
+// output: an error is thrown, as the title length cannot be greater than 10 characters, according to schema.
+```
+
+> The error is thrown both for values ​​sent by the constructor and for those modified by the Class instance.
 
 ## License
 

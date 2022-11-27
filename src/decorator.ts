@@ -1,9 +1,12 @@
 import { PropertyProxy, ProxyType } from "./types";
 import { lowCaseFirstLetter } from "./util";
-import { AnyZodObject } from "zod";
+import { AnyZodObject, z } from "zod";
+import { validate } from "class-validator";
+import { ErrorItem, ValidationError } from "./Error/ValidationError";
 
 export function usePropertyProxy<T>() {
 	let schemaObj: AnyZodObject;
+	let schemaTarget: any;
 
 	function Validate(schama: object): ClassDecorator {
     	return function(target: any) {
@@ -12,6 +15,8 @@ export function usePropertyProxy<T>() {
     				if(schama) {
     					schemaObj = schama as AnyZodObject;
     				}
+					schemaTarget = new _target(...args);
+                    
     				return new target(...args);
     			}
     		});
@@ -35,9 +40,40 @@ export function usePropertyProxy<T>() {
 							}
 							val = newValue;
 
-							if (schemaObj){
-								const prop = schemaObj.pick({ [key as string]: true });
-								prop.parse({ [key]: newValue});
+							
+							validate(target).then(errors => {
+								if (errors.length > 0) {
+                            
+									const errorsMaped: ErrorItem[] = errors.map(error => {
+										return {
+											property: error.property,
+											message: (error.constraints && Object.values(error.constraints)[0]) as string,
+											type: error.constraints && Object.keys(error.constraints)[0]
+										};
+									});
+                            
+									throw new ValidationError(errorsMaped);
+								} 
+							});
+
+							if (schemaObj && schemaTarget){
+								try {
+									schemaObj.parse(schemaTarget);
+									const prop = schemaObj.pick({ [key as string]: true });
+									prop.parse({ [key]: newValue});
+								} catch (_error) {
+									const error = _error as z.ZodError ;
+									const errorsMaped: ErrorItem[] = error.errors.map(error => {
+										return {
+											property: error.path[0].toString(),
+											message: error.message,
+											type: error.code
+										};
+									});
+									throw new ValidationError(errorsMaped);
+								}
+                                
+								
 							}
 						},
 						enumerable: true,

@@ -18,8 +18,11 @@ You need to enable in tsconfig.json:
 
 ```json
 {
-    "experimentalDecorators": true, 
-    "emitDecoratorMetadata": true
+  "compilerOptions": {
+    {
+        "experimentalDecorators": true, 
+        "emitDecoratorMetadata": true
+    }
 }
 ```
 
@@ -62,7 +65,41 @@ console.log(category.title) // output: other_title
 console.log(category.isActive) // output: true
 ```
 
-### Using validator with Zod
+### Using validator with class-validator
+
+```typescript
+import { usePropertyProxy } from 'prop-proxy'
+import { Length } from 'class-validator'
+
+interface Struct {
+    title: string;
+    isActive: boolean;
+}
+
+const { Property, Validate } = usePropertyProxy<Struct>();
+
+@Validate()
+class Category implements Struct {
+    @Property()
+    @Length(0, 10)
+    title!: string;
+
+    @Property()
+    isActive!: boolean;
+
+    constructor({title, isActive}: Struct){
+        Object.assign(this, {title, isActive})
+    }
+}
+
+const category = new Category({title: 'title longer than 10 characters', isActive: true})
+
+// output: an error is thrown, as the title length cannot be greater than 10 characters, according to schema.
+```
+
+> The error is thrown both for values ​​sent by the constructor and for those modified by the Class instance.
+
+### Using validator with zod
 
 ```typescript
 import { usePropertyProxy } from 'prop-proxy'
@@ -73,12 +110,12 @@ interface Struct {
     isActive: boolean;
 }
 
-export const SchemaCategory: z.ZodType<Struct> = z.object({
+const SchemaCategory: z.ZodType<Struct> = z.object({
     title: z.string().max(10),
     isActive: z.boolean(),
 })
 
-const { Property, proxy, Validate } = usePropertyProxy<Struct>();
+const { Property, Validate } = usePropertyProxy<Struct>();
 
 @Validate(SchemaCategory)
 class Category implements Struct {
@@ -100,22 +137,28 @@ const category = new Category({title: 'title longer than 10 characters', isActiv
 
 > The error is thrown both for values ​​sent by the constructor and for those modified by the Class instance.
 
-### Using validator with Class-Validator
+### Using validator with yup
 
 ```typescript
 import { usePropertyProxy } from 'prop-proxy'
-import { Length } from 'class-validator'
+
+import { object, string, boolean } from 'yup';
 
 interface Struct {
     title: string;
     isActive: boolean;
 }
 
-const { Property, proxy } = usePropertyProxy<Struct>();
+const SchemaCategory = object({
+  title: string().required().max(10),
+  isActive: boolean().required(),
+});
 
+const { Property, Validate } = usePropertyProxy<Struct>();
+
+@Validate(SchemaCategory)
 class Category implements Struct {
     @Property()
-    @Length(0, 10)
     title!: string;
 
     @Property()

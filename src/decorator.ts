@@ -1,19 +1,20 @@
-import { PropertyProxy, ProxyType } from "./types";
+import { PropertyProxy, ProxyType, Schemas } from "./types";
 import { lowCaseFirstLetter } from "./util";
-import { AnyZodObject, z } from "zod";
+import { AnyZodObject, z, ZodObject } from "zod";
 import { validate } from "class-validator";
 import { ErrorItem, ValidationError } from "./Error/ValidationError";
+import { ValidationError as ErrorYup, ObjectSchema, AnyObjectSchema } from "yup";
 
 export function usePropertyProxy<T>() {
-	let schemaObj: AnyZodObject;
+	let schemaObj: Schemas;
 	let schemaTarget: any;
 
-	function Validate(schama?: object): ClassDecorator {
+	function Validate(schama?: Schemas): ClassDecorator {
     	return function(target: any) {
     	  return new Proxy(target, {
     			construct: (_target, args) => {
     				if(schama) {
-    					schemaObj = schama as AnyZodObject;
+    					schemaObj = schama as AnyZodObject | AnyObjectSchema;
     				}
                     
 					schemaTarget = new _target(...args);
@@ -45,6 +46,7 @@ export function usePropertyProxy<T>() {
 								Object.assign(schemaTarget, { [key]: newValue} );
 							}
 	                        
+							// start support class-validator
 							if (schemaTarget){                
 								validate(schemaTarget).then(errors => {
 									if (errors.length > 0) {
@@ -60,12 +62,12 @@ export function usePropertyProxy<T>() {
 									} 
 								});
 							} 
+							// end support class-validator
 
-							if (schemaObj && schemaTarget){
+							// start support zod
+							if (schemaObj && schemaTarget && schemaObj instanceof ZodObject){
 								try {
 									schemaObj.parse(schemaTarget);
-									const prop = schemaObj.pick({ [key as string]: true });
-									prop.parse({ [key]: newValue});
 								} catch (_error) {
 									const error = _error as z.ZodError ;
 									const errorsMaped: ErrorItem[] = error.errors.map(error => {
@@ -77,9 +79,26 @@ export function usePropertyProxy<T>() {
 									});
 									throw new ValidationError(errorsMaped);
 								}
-                                
-								
 							}
+							// end support zod
+
+							// start support yup
+							if (schemaObj && schemaTarget && schemaObj instanceof ObjectSchema){
+								schemaObj.validate(schemaTarget, { abortEarly: false }).catch(_error => {
+									const error = _error as ErrorYup;
+
+									const errorsMaped: ErrorItem[] = error.inner.map(error => {
+										return {
+											property: error.path as string,
+											message: error.errors[0],
+											type: error.type
+										};
+									});
+
+									throw new ValidationError(errorsMaped);
+								});
+							}
+							// end support yup
 						},
 						enumerable: true,
 					});

@@ -1,3 +1,6 @@
+import { ObjectSchema } from "yup";
+import { z, ZodObject } from "zod";
+
 interface Setter<T> {
     setValue: (value: T) => void,
     value: T
@@ -20,3 +23,5 @@ type Get<T> = {
 
 
 export type PropertyProxy<T> = Set<T> & Get<T> 
+
+export type Schemas = typeof ZodObject.prototype | typeof ObjectSchema.prototype | z.ZodType;

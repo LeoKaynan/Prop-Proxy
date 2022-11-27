@@ -1,7 +1,7 @@
 {
   "name": "prop-proxy",
   "description": "Prop-Proxy allows you to intercept getters and setters of class attributes through decorators",
-  "version": "2.1.4",
+  "version": "2.2.0",
   "license": "MIT",
   "author": "LeoKaynan",
   "main": "./lib/index.js",
@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "class-validator": "^0.13.2",
+    "yup": "^0.32.11",
     "zod": "^3.19.1"
   }
 }

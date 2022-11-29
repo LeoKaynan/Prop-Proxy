@@ -1,9 +1,6 @@
 import { PropertyProxy, ProxyType, Schemas } from "./types";
 import { lowCaseFirstLetter } from "./util";
-import { z, ZodObject } from "zod";
-import { validate } from "class-validator";
-import { ErrorItem, ValidationError } from "./Error/ValidationError";
-import { ValidationError as ErrorYup, ObjectSchema } from "yup";
+import { classValidate, yupValidate, zodValidate } from "./validates";
 
 export function usePropertyProxy<T>() {
 	let schemaObj: Schemas;
@@ -13,13 +10,16 @@ export function usePropertyProxy<T>() {
     	return function(target: any) {
     	  return new Proxy(target, {
     			construct: (_target, args) => {
+					schemaTarget = new target(...args);
+                    
     				if(schama) {
     					schemaObj = schama;
+						zodValidate(schemaTarget, schama);
+						yupValidate(schemaTarget, schama);
     				}
-                    
-					schemaTarget = new _target(...args);
-        
-    				return new target(...args);
+
+					classValidate(schemaTarget);
+    				return schemaTarget;
     			}
     		});
     	};
@@ -46,59 +46,9 @@ export function usePropertyProxy<T>() {
 								Object.assign(schemaTarget, { [key]: newValue} );
 							}
 	                        
-							// start support class-validator
-							if (schemaTarget){                
-								validate(schemaTarget).then(errors => {
-									if (errors.length > 0) {
-										const errorsMaped: ErrorItem[] = errors.map(error => {
-											return {
-												property: error.property,
-												message: (error.constraints && Object.values(error.constraints)[0]) as string,
-												type: error.constraints && Object.keys(error.constraints)[0]
-											};
-										});
-                            
-										throw new ValidationError(errorsMaped);
-									} 
-								});
-							} 
-							// end support class-validator
-
-							// start support zod
-							if (schemaObj && schemaTarget && schemaObj instanceof ZodObject){
-								try {
-									schemaObj.parse(schemaTarget);
-								} catch (_error) {
-									const error = _error as z.ZodError ;
-									const errorsMaped: ErrorItem[] = error.errors.map(error => {
-										return {
-											property: error.path[0].toString(),
-											message: error.message,
-											type: error.code
-										};
-									});
-									throw new ValidationError(errorsMaped);
-								}
-							}
-							// end support zod
-
-							// start support yup
-							if (schemaObj && schemaTarget && schemaObj instanceof ObjectSchema){
-								schemaObj.validate(schemaTarget, { abortEarly: false }).catch(_error => {
-									const error = _error as ErrorYup;
-
-									const errorsMaped: ErrorItem[] = error.inner.map(error => {
-										return {
-											property: error.path as string,
-											message: error.errors[0],
-											type: error.type
-										};
-									});
-
-									throw new ValidationError(errorsMaped);
-								});
-							}
-							// end support yup
+							classValidate(schemaTarget);
+							zodValidate(schemaTarget, schemaObj);
+							yupValidate(schemaTarget, schemaObj);
 						},
 						enumerable: true,
 					});

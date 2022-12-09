@@ -56,7 +56,7 @@ class Category implements Struct {
 proxy.getTitle((value) => `other_${value}`)
 
 //setter intercept
-proxy.setIsActive(({setValue, value}) => value ? setValue(value) : setValue(true));
+proxy.setIsActive(({setValue, value}) => setValue(true));
 
 const category = new Category({title: 'title', isActive: false})
 

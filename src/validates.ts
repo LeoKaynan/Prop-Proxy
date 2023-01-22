@@ -3,21 +3,21 @@ import { z, ZodObject } from "zod";
 import { ErrorItem, ValidationError } from "./Error/ValidationError";
 import { ValidationError as ErrorYup, ObjectSchema } from "yup";
 
-export const classValidate = (target?: any) => {
+export const classValidate = async (target?: any) => {
 	if (target) {
-		validate(target).then(errors => {
-			if (errors.length > 0) {
-				const errorsMaped: ErrorItem[] = errors.map(error => {
-					return {
-						property: error.property,
-						message: (error.constraints && Object.values(error.constraints)[0]) as string,
-						type: error.constraints && Object.keys(error.constraints)[0]
-					};
-				});
-    
-				throw new ValidationError(errorsMaped);
-			} 
-		});
+		const errors = await validate(target);
+
+		if (errors.length > 0) {
+			const errorsMaped: ErrorItem[] = errors.map(error => {
+				return {
+					property: error.property,
+					message: (error.constraints && Object.values(error.constraints)[0]) as string,
+					type: error.constraints && Object.keys(error.constraints)[0]
+				};
+			});
+
+			throw new ValidationError(errorsMaped);
+		} 
 	}
 };
 

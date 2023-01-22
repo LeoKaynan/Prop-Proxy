@@ -1,11 +1,11 @@
-import { validate } from "class-validator";
+import { validateSync } from "class-validator";
 import { z, ZodObject } from "zod";
 import { ErrorItem, ValidationError } from "./Error/ValidationError";
 import { ValidationError as ErrorYup, ObjectSchema } from "yup";
 
-export const classValidate = async (target?: any) => {
+export const classValidate = (target?: any) => {
 	if (target) {
-		const errors = await validate(target);
+		const errors = validateSync(target);
 
 		if (errors.length > 0) {
 			const errorsMaped: ErrorItem[] = errors.map(error => {

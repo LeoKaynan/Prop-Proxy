@@ -9,7 +9,7 @@ export function usePropertyProxy<T>() {
 	function Validate(schama?: Schemas): ClassDecorator {
     	return function(target: any) {
     	  return new Proxy(target, {
-    			construct: async (_target, args) => {
+    			construct: (_target, args) => {
 					schemaTarget = new target(...args);
                     
     				if(schama) {
@@ -18,7 +18,7 @@ export function usePropertyProxy<T>() {
 						yupValidate(schemaTarget, schama);
     				}
 
-					await classValidate(schemaTarget);
+					classValidate(schemaTarget);
     				return schemaTarget;
     			}
     		});
@@ -33,7 +33,7 @@ export function usePropertyProxy<T>() {
 					let val: T[keyof T];
 					Object.defineProperty(this, key, {
 						get: () => ObjectProxy[key]?.getter?.(val) || val,
-						set: async (newValue) => {
+						set: (newValue) => {
 							if(ObjectProxy[key]?.setter) {
 								ObjectProxy[key].setter?.({setValue(value) {
 									val = value;
@@ -46,7 +46,7 @@ export function usePropertyProxy<T>() {
 								Object.assign(schemaTarget, { [key]: newValue} );
 							}
 	                        
-							await classValidate(schemaTarget);
+							classValidate(schemaTarget);
 							zodValidate(schemaTarget, schemaObj);
 							yupValidate(schemaTarget, schemaObj);
 						},

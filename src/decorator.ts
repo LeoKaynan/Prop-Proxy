@@ -42,9 +42,9 @@ export function usePropertyProxy<T>() {
 							}
 							val = newValue;
 
-							if (schemaTarget && schemaTarget[key] !== newValue) {
-								Object.assign(schemaTarget, { [key]: newValue} );
-							}
+							// if (schemaTarget && schemaTarget[key] !== newValue) {
+							// 	Object.assign(schemaTarget, { [key]: newValue} );
+							// }
 	                        
 							classValidate(schemaTarget);
 							zodValidate(schemaTarget, schemaObj);
@@ -53,6 +53,7 @@ export function usePropertyProxy<T>() {
 						enumerable: true,
 					});
 					this[key] = v;
+					return;
 				},
 			}); 
 		};
